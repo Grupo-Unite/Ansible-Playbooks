@@ -1,0 +1,61 @@
+---
+- name: Add user
+  become: yes
+  become_user: root
+  user:
+    name: '{{  user  }}'
+    state: present
+
+- name: Create directory .ssh
+  become: yes
+  become_user: root
+  file:
+    path: /home/{{  user  }}/.ssh/
+    state: directory
+
+- name: Copy public key
+  become: yes
+  become_user: root
+  copy:
+    src: ./files/public-key-{{  user  }}
+    dest: /home/{{  user  }}/.ssh/authorized_keys
+
+- name: Change owner
+  become: yes
+  become_user: root
+  file:
+    path: /home/{{  user  }}/.ssh/
+    owner: '{{  user  }}'
+    group: '{{  user  }}'
+    mode: '0700'
+
+- name: Create file sudo_user
+  become: yes
+  become_user: root
+  file:
+    path: /etc/sudoers.d/sudo_user
+    state: touch
+    mode: '0440'
+    owner: root
+    group: root
+
+- name: Adding user to sudoers
+  become: yes
+  become_user: root
+  lineinfile:
+    path: /etc/sudoers.d/sudo_user
+    state: present
+#    regexp: '^%ADMIN ALL='
+    line:  '"{{  user  }}"   ALL=(ALL) NOPASSWD: ALL'
+#    validate: /usr/sbin/visudo -cf %s
+
+
+#- name: Adding user to sudoers
+#  become: yes
+#  become_user: root
+#  template:
+#    src: sudo_user.j2
+#    dest: /etc/sudoers.d/sudo_user
+#    mode: '0440'
+#    owner: root
+#    group: root
